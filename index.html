@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jonga GIS - Spatial Web Application</title>
+
+    <!-- Leaflet & Plugin Styles -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-search@3.0.5/dist/leaflet-search.min.css"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css"/>
+
+    <!-- Custom Modular CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/map.css">
+    <link rel="stylesheet" href="css/sidebar.css">
+    <link rel="stylesheet" href="css/popup.css">
+    <link rel="stylesheet" href="css/legend.css">
+</head>
+<body>
+
+<div id="app-container">
+    <!-- Sidebar Control Panel -->
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <h2>🌍 TerraMetrics</h2>
+            <button id="toggle-sidebar" class="btn btn-danger">◀</button>
+        </div>
+        <div class="sidebar-content">
+            
+            <!-- Spatial Analysis Widget -->
+            <div class="panel-section">
+                <h3>Spatial Analysis (Turf.js)</h3>
+                <div class="form-group">
+                    <label for="buffer-layer">Target Layer</label>
+                    <select id="buffer-layer" class="form-control">
+                        <option value="hospitals">Health Facilities</option>
+                        <option value="roads">Road Network</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="buffer-distance">Radius (Kilometers)</label>
+                    <input type="number" id="buffer-distance" class="form-control" value="5" min="1" max="100">
+                </div>
+                <button id="btn-run-buffer" class="btn" style="width:100%;">Generate Buffer</button>
+            </div>
+
+            <!-- Analytics Dashboard -->
+            <div class="panel-section">
+                <h3>Data Summary</h3>
+                <canvas id="layerChart" width="300" height="200"></canvas>
+            </div>
+
+            <!-- Attribute Table Drawer Control -->
+            <div class="panel-section">
+                <h3>Attribute Operations</h3>
+                <button id="btn-export-geojson" class="btn" style="width:100%; margin-bottom:8px;">Export Drawn Features</button>
+                <button id="btn-open-attribute-table" class="btn" style="width:100%; background:#4a5568;">View Attribute Data</button>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- Map Canvas Container -->
+    <main id="map"></main>
+
+    <!-- Dynamic Mouse Coordinates Overlay -->
+    <div id="coordinate">Lat: 0.00000 | Lng: 0.00000</div>
+</div>
+
+<!-- Attribute Table Drawer Modal -->
+<div id="attribute-modal" style="display:none; position:fixed; bottom:0; left:0; width:100%; height:30%; background:white; z-index:2000; box-shadow:0 -4px 10px rgba(0,0,0,0.3); overflow:auto; padding:16px;">
+    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+        <h3>Attribute Data Viewer</h3>
+        <button id="close-modal" class="btn btn-danger">Close</button>
+    </div>
+    <div id="attribute-table-container"></div>
+</div>
+
+<!-- Dependency External Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet-search@3.0.5/dist/leaflet-search.min.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Inline Data Scripts -->
+<script src="data/zaf_data/road_zaf.js"></script>
+<script src="data/zaf_data/water_zaf.js"></script>
+<script src="data/healthfacilities.js"></script>
+<script src="data/RailwayLines.js"></script>
+<script src="data/16_Regions.js"></script>
+
+<!-- Local Plugin Integration -->
+<script src="leaflet.browser.print.min.js"></script>
+
+<!-- Modern ES6 Application Entrypoint Module -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
