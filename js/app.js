@@ -26,3 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
     initDashboard(map, overlays);          // Live Chart.js viewport counts
     setupAttributeTable(map, overlays);    // Live viewport spatial attribute reader
 });
+
+// Inside js/app.js
+const mapControls = setupControls(map, baseMaps, overlays);
