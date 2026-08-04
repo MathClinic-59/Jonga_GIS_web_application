@@ -1,42 +1,98 @@
-export function setupAttributeTable(layers) {
+// js/attributeTable.js
+
+export function setupAttributeTable(map, layers) {
     const openBtn = document.getElementById('btn-open-attribute-table');
     const closeBtn = document.getElementById('close-modal');
     const modal = document.getElementById('attribute-modal');
     const container = document.getElementById('attribute-table-container');
 
-    if (!openBtn || !modal) return;
+    if (!openBtn || !modal || !container) return;
 
-    openBtn.addEventListener('click', () => {
-        const hospitalLayer = layers["Health Facilities"];
-        if (!hospitalLayer) {
-            container.innerHTML = "<p>No layer available for tabular display.</p>";
-            modal.style.display = 'block';
+    // Helper to render visible feature records
+    const renderTable = () => {
+        container.innerHTML = "";
+        const mapBounds = map.getBounds();
+        let totalVisibleFeatures = [];
+
+        // Collect visible features across all active vector layers
+        for (let key in layers) {
+            const layer = layers[key];
+            
+            // Process only layers visible on map
+            if (layer && map.hasLayer(layer) && layer.eachLayer) {
+                layer.eachLayer(subLayer => {
+                    let isVisible = false;
+
+                    if (subLayer.getLatLng && mapBounds.contains(subLayer.getLatLng())) {
+                        isVisible = true;
+                    } else if (subLayer.getBounds && mapBounds.intersects(subLayer.getBounds())) {
+                        isVisible = true;
+                    }
+
+                    if (isVisible && subLayer.feature && subLayer.feature.properties) {
+                        totalVisibleFeatures.push({
+                            layerName: key,
+                            properties: subLayer.feature.properties
+                        });
+                    }
+                });
+            }
+        }
+
+        if (totalVisibleFeatures.length === 0) {
+            container.innerHTML = "<p style='padding:10px;'>No vector features currently visible in the current viewport.</p>";
             return;
         }
 
-        const geojson = hospitalLayer.toGeoJSON();
-        if (!geojson.features || geojson.features.length === 0) {
-            container.innerHTML = "<p>Layer contains no features.</p>";
-            modal.style.display = 'block';
-            return;
+        // Build HTML Table
+        let tableHtml = `
+            <div style="margin-bottom: 8px; font-weight: bold; color: #4a5568;">
+                Showing ${totalVisibleFeatures.length} visible feature(s) on screen
+            </div>
+            <table class="gis-popup-table" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th>Source Layer</th>
+        `;
+
+        // Gather sample headers from the first visible feature
+        const sampleProps = totalVisibleFeatures[0].properties;
+        for (let propName in sampleProps) {
+            tableHtml += `<th>${propName}</th>`;
         }
-
-        let tableHtml = `<table class="gis-popup-table" style="width:100%;"><thead><tr>`;
-        const sampleProps = geojson.features[0].properties;
-
-        for (let key in sampleProps) tableHtml += `<th>${key}</th>`;
         tableHtml += `</tr></thead><tbody>`;
 
-        geojson.features.slice(0, 50).forEach(f => {
-            tableHtml += `<tr>`;
-            for (let key in sampleProps) tableHtml += `<td>${f.properties[key] || ''}</td>`;
+        // Limit display to first 100 features for optimal performance
+        totalVisibleFeatures.slice(0, 100).forEach(item => {
+            tableHtml += `<tr><td><strong>${item.layerName}</strong></td>`;
+            for (let propName in sampleProps) {
+                const val = item.properties[propName];
+                tableHtml += `<td>${val !== undefined && val !== null ? val : ''}</td>`;
+            }
             tableHtml += `</tr>`;
         });
 
         tableHtml += `</tbody></table>`;
         container.innerHTML = tableHtml;
+    };
+
+    // Open Modal and render table
+    openBtn.addEventListener('click', () => {
+        renderTable();
         modal.style.display = 'block';
     });
 
-    closeBtn.addEventListener('click', () => { modal.style.display = 'none'; });
+    // Close Modal
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+    }
+
+    // Auto-update modal table when panning/zooming if modal is currently open
+    map.on('moveend zoomend overlayadd overlayremove', () => {
+        if (modal.style.display === 'block') {
+            renderTable();
+        }
+    });
 }
