@@ -6,7 +6,7 @@ import { bindFeaturePopup } from './popup.js';
 export function loadOverlayLayers() {
     const layers = {};
 
-    // 1. Check datasets inside root data/
+    // 1. Root Datasets
     if (typeof healthfacility !== 'undefined') {
         layers["Health Facilities"] = L.geoJson(healthfacility, { 
             pointToLayer: GISStyles.hospitals, 
@@ -26,7 +26,7 @@ export function loadOverlayLayers() {
         });
     }
 
-    // 2. Check datasets inside data/zaf_data/
+    // 2. data/zaf_data/ Datasets
     if (typeof road_zaf !== 'undefined') {
         layers["South African Roads"] = L.geoJson(road_zaf, { 
             style: GISStyles.roads, 
@@ -46,7 +46,6 @@ export function loadOverlayLayers() {
         });
     }
 
-    // Check Ward Level 4 (Handles common variable naming variations)
     const wardData = typeof south_africa_Ward_level_4 !== 'undefined' ? south_africa_Ward_level_4 : (typeof ward_level_4 !== 'undefined' ? ward_level_4 : undefined);
     if (wardData) {
         layers["Ward Level 4 Boundaries"] = L.geoJson(wardData, { 
@@ -55,7 +54,7 @@ export function loadOverlayLayers() {
         });
     }
 
-    // Check Administrative Boundaries
+    // ➕ Included Administrative Boundaries (zaf_admin.js)
     if (typeof zaf_admin !== 'undefined') {
         layers["Administrative Boundaries"] = L.geoJson(zaf_admin, { 
             style: GISStyles.adminBoundaries, 
@@ -63,7 +62,7 @@ export function loadOverlayLayers() {
         });
     }
 
-    // GeoServer WMS Layer
+    // 3. GeoServer WMS Layer
     layers["Rivers (GeoServer WMS)"] = L.tileLayer.wms(CONFIG.geoserver.wmsUrl, {
         layers: `${CONFIG.geoserver.workspace}:rivers`,
         format: 'image/png',
