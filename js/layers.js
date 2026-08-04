@@ -1,3 +1,4 @@
+// js/layers.js
 import { CONFIG } from './config.js';
 import { GISStyles } from './styles.js';
 import { bindFeaturePopup } from './popup.js';
@@ -5,21 +6,7 @@ import { bindFeaturePopup } from './popup.js';
 export function loadOverlayLayers() {
     const layers = {};
 
-    // 📍 Subfolder datasets: zaf_data/
-    if (typeof road_zaf !== 'undefined') {
-        layers["South African Roads"] = L.geoJson(road_zaf, { 
-            style: GISStyles.roads, 
-            onEachFeature: bindFeaturePopup 
-        });
-    }
-    if (typeof water_zaf !== 'undefined') {
-        layers["South African Water Bodies"] = L.geoJson(water_zaf, { 
-            style: GISStyles.water, 
-            onEachFeature: bindFeaturePopup 
-        });
-    }
-
-    // 📍 Root data/ datasets
+    // 1. Check datasets inside root data/
     if (typeof healthfacility !== 'undefined') {
         layers["Health Facilities"] = L.geoJson(healthfacility, { 
             pointToLayer: GISStyles.hospitals, 
@@ -39,7 +26,44 @@ export function loadOverlayLayers() {
         });
     }
 
-    // 📍 GeoServer WMS Layer
+    // 2. Check datasets inside data/zaf_data/
+    if (typeof road_zaf !== 'undefined') {
+        layers["South African Roads"] = L.geoJson(road_zaf, { 
+            style: GISStyles.roads, 
+            onEachFeature: bindFeaturePopup 
+        });
+    }
+    if (typeof water_zaf !== 'undefined') {
+        layers["South African Water Bodies"] = L.geoJson(water_zaf, { 
+            style: GISStyles.water, 
+            onEachFeature: bindFeaturePopup 
+        });
+    }
+    if (typeof river_zaf !== 'undefined') {
+        layers["Rivers (Vector)"] = L.geoJson(river_zaf, { 
+            style: GISStyles.riversVector, 
+            onEachFeature: bindFeaturePopup 
+        });
+    }
+
+    // Check Ward Level 4 (Handles common variable naming variations)
+    const wardData = typeof south_africa_Ward_level_4 !== 'undefined' ? south_africa_Ward_level_4 : (typeof ward_level_4 !== 'undefined' ? ward_level_4 : undefined);
+    if (wardData) {
+        layers["Ward Level 4 Boundaries"] = L.geoJson(wardData, { 
+            style: GISStyles.wards, 
+            onEachFeature: bindFeaturePopup 
+        });
+    }
+
+    // Check Administrative Boundaries
+    if (typeof zaf_admin !== 'undefined') {
+        layers["Administrative Boundaries"] = L.geoJson(zaf_admin, { 
+            style: GISStyles.adminBoundaries, 
+            onEachFeature: bindFeaturePopup 
+        });
+    }
+
+    // GeoServer WMS Layer
     layers["Rivers (GeoServer WMS)"] = L.tileLayer.wms(CONFIG.geoserver.wmsUrl, {
         layers: `${CONFIG.geoserver.workspace}:rivers`,
         format: 'image/png',
