@@ -1,0 +1,30 @@
+.leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.gis-popup-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.gis-popup-table th {
+  background-color: #f7fafc;
+  text-align: left;
+  padding: 6px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.gis-popup-table td {
+  padding: 6px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.popup-title {
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+}
