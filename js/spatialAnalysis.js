@@ -1,75 +1,91 @@
 // js/spatialAnalysis.js
 
 export function setupSpatialAnalysis(map, layers) {
-    const layerSelect = document.getElementById('analysis-layer-select');
-    const distanceInput = document.getElementById('buffer-distance');
-    const runBtn = document.getElementById('btn-run-analysis');
-    const clearBtn = document.getElementById('btn-clear-analysis');
+    const runBtn = document.getElementById('btn-run-buffer');
+    const selectEl = document.getElementById('buffer-layer');
+    if (!runBtn || !selectEl) return;
 
-    if (!layerSelect || !runBtn) return;
+    // Helper function to update the dropdown with ONLY currently active/selected layers
+    const updateTargetLayerDropdown = () => {
+        const currentSelection = selectEl.value; // Preserve user's current choice if still active
+        selectEl.innerHTML = '';
 
-    // Populates dropdown with ALL available vector overlay layers
-    const populateLayerDropdown = () => {
-        layerSelect.innerHTML = '<option value="">-- Select Layer --</option>';
+        let activeCount = 0;
 
-        for (let key in layers) {
-            const layer = layers[key];
-            
-            // Check if layer exists and is a vector GeoJSON layer (excluding WMS tiles)
-            if (layer && typeof layer.toGeoJSON === 'function') {
-                const opt = document.createElement('option');
-                opt.value = key;
-                opt.textContent = key;
-                layerSelect.appendChild(opt);
+        Object.keys(layers).forEach(layerName => {
+            const layer = layers[layerName];
+
+            // Only list vector layers that are ACTIVE (checked on map)
+            if (layer && map.hasLayer(layer) && typeof layer.toGeoJSON === 'function') {
+                const option = document.createElement('option');
+                option.value = layerName;
+                option.textContent = layerName;
+                selectEl.appendChild(option);
+                activeCount++;
             }
+        });
+
+        if (activeCount === 0) {
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- No Active Overlay Selected --';
+            selectEl.appendChild(defaultOpt);
+        } else if (currentSelection && selectEl.querySelector(`option[value="${CSS.escape(currentSelection)}"]`)) {
+            selectEl.value = currentSelection;
         }
     };
 
-    populateLayerDropdown();
+    // Populate dropdown on initial load
+    updateTargetLayerDropdown();
 
-    // Store buffer analysis layer reference for cleanup
-    let analysisGroup = L.featureGroup().addTo(map);
-
-    // Run Buffer Analysis using Turf.js
-    runBtn.addEventListener('click', () => {
-        const selectedKey = layerSelect.value;
-        const distance = parseFloat(distanceInput ? distanceInput.value : 5);
-
-        if (!selectedKey || !layers[selectedKey]) {
-            alert('Please select a valid vector layer to analyze.');
-            return;
-        }
-
-        analysisGroup.clearLayers();
-        const selectedLayer = layers[selectedKey];
-        const geojsonData = selectedLayer.toGeoJSON();
-
-        try {
-            // Perform Turf.js buffer (in kilometers)
-            const buffered = turf.buffer(geojsonData, distance, { units: 'kilometers' });
-
-            const bufferLeafletLayer = L.geoJson(buffered, {
-                style: {
-                    color: '#e11d48',
-                    fillColor: '#f43f5e',
-                    fillOpacity: 0.35,
-                    weight: 2,
-                    dashArray: '4, 4'
-                }
-            });
-
-            bufferLeafletLayer.addTo(analysisGroup);
-            map.fitBounds(bufferLeafletLayer.getBounds());
-
-        } catch (err) {
-            console.error("Spatial Analysis Error:", err);
-            alert("Could not complete buffer analysis on the selected dataset.");
-        }
+    // Dynamically update dropdown whenever a user checks or unchecks a layer in the layer control
+    map.on('overlayadd overlayremove', () => {
+        updateTargetLayerDropdown();
     });
 
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            analysisGroup.clearLayers();
-        });
-    }
+    let bufferResultLayer = null;
+
+    // Run spatial analysis buffer calculation
+    runBtn.addEventListener('click', () => {
+        const selectedLayerName = selectEl.value;
+        const distanceKm = parseFloat(document.getElementById('buffer-distance').value);
+
+        if (!selectedLayerName || !layers[selectedLayerName]) {
+            return alert('Please select a valid active target layer!');
+        }
+
+        const targetLayer = layers[selectedLayerName];
+
+        try {
+            const geojson = targetLayer.toGeoJSON();
+
+            if (!geojson || (geojson.type === 'FeatureCollection' && geojson.features.length === 0)) {
+                return alert('The selected layer has no vector features to analyze.');
+            }
+
+            // Run Turf.js Buffer
+            const buffered = turf.buffer(geojson, distanceKm, { units: 'kilometers' });
+
+            if (bufferResultLayer) {
+                map.removeLayer(bufferResultLayer);
+            }
+
+            bufferResultLayer = L.geoJson(buffered, {
+                style: { 
+                    color: '#e53e3e', 
+                    fillColor: '#feb2b2', 
+                    fillOpacity: 0.4, 
+                    weight: 2 
+                }
+            }).addTo(map);
+
+            if (bufferResultLayer.getBounds().isValid()) {
+                map.fitBounds(bufferResultLayer.getBounds());
+            }
+
+        } catch (error) {
+            console.error('Error executing spatial buffer analysis:', error);
+            alert('Could not compute buffer for this layer.');
+        }
+    });
 }
